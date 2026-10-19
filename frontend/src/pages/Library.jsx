@@ -23,9 +23,58 @@ const matchesFilter = (item, filter) => {
     return filter.types.includes(item.type);
 };
 
+// Criterios de orden disponibles. `get` extrae el valor a comparar y `dir` es el
+// sentido ("asc" o "desc"). Los elementos sin valor siempre quedan al final.
+// Los criterios sin `get` aún no tienen datos en la API y solo muestran un aviso.
+const STATUS_ORDER = ["watching", "plan_to_watch", "paused", "completed"];
+
+const SORT_OPTIONS = {
+    fecha_agregado: { get: (item) => item.id, dir: "desc" }, // el id crece con cada alta
+    titulo: { get: (item) => item.title, dir: "asc" },
+    anio_lanzamiento: { get: (item) => item.movie?.release_year ?? item.album?.release_year, dir: "desc" },
+    calificacion_personal: { get: (item) => item.rating, dir: "desc" },
+    duracion: { get: (item) => item.movie?.duration_minutes, dir: "desc" },
+    cantidad_elementos: { get: (item) => item.album?.total_tracks, dir: "desc" },
+    estado: { get: (item) => STATUS_ORDER.indexOf(item.status), dir: "asc" },
+    director_artista_creador: { get: (item) => item.movie?.director ?? item.album?.artist, dir: "asc" },
+    ultima_actividad: {},
+    cantidad_etiquetas: {},
+    genero: {},
+    progreso: {},
+    fecha_finalizacion: {},
+    favoritos: {},
+    orden_personalizado: {},
+};
+
+const sortContent = (items, sortKey, reversed = false) => {
+    const option = SORT_OPTIONS[sortKey];
+    if (!option?.get) return items;
+
+    // Invertir cambia solo el sentido; los elementos sin valor siguen al final
+    const isDesc = (option.dir === "desc") !== reversed;
+    const factor = isDesc ? -1 : 1;
+    return [...items].sort((a, b) => {
+        const valueA = option.get(a);
+        const valueB = option.get(b);
+        const missingA = valueA === undefined || valueA === null || valueA === "";
+        const missingB = valueB === undefined || valueB === null || valueB === "";
+
+        if (missingA && missingB) return 0;
+        if (missingA) return 1;
+        if (missingB) return -1;
+
+        if (typeof valueA === "string") {
+            return factor * valueA.localeCompare(valueB, "es", { sensitivity: "base" });
+        }
+        return factor * (valueA - valueB);
+    });
+};
+
 function Library() {
     const [content, setContent] = useState([]);
     const [activeFilter, setActiveFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("titulo");
+    const [sortReversed, setSortReversed] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -58,7 +107,20 @@ function Library() {
     };
 
     const currentFilter = TYPE_FILTERS.find((filter) => filter.id === activeFilter);
-    const filteredContent = content.filter((item) => matchesFilter(item, currentFilter));
+    const filteredContent = sortContent(
+        content.filter((item) => matchesFilter(item, currentFilter)),
+        sortBy,
+        sortReversed
+    );
+
+    const handleSortChange = (event) => {
+        const selected = event.target.value;
+        if (!SORT_OPTIONS[selected]?.get) {
+            alert("Este criterio de orden todavía no está disponible.");
+            return; // el select es controlado, vuelve a la opción anterior
+        }
+        setSortBy(selected);
+    };
 
     return (
         <>
@@ -74,7 +136,7 @@ function Library() {
                         <li>
                             <button>Filtros</button>
                             
-                            <select>
+                            <select value={sortBy} onChange={handleSortChange} aria-label="Ordenar por">
                                 <option value="fecha_agregado">Fecha de agregado</option>
                                 <option value="titulo">Título</option>
                                 <option value="anio_lanzamiento">Año de lanzamiento</option>
@@ -91,6 +153,14 @@ function Library() {
                                 <option value="favoritos">Favoritos</option>
                                 <option value="orden_personalizado">Orden personalizado</option>
                             </select>
+                            <button
+                                type="button"
+                                onClick={() => setSortReversed((prev) => !prev)}
+                                aria-pressed={sortReversed}
+                                title="Invertir el orden"
+                            >
+                                {sortReversed ? "↑ Invertido" : "↕ Invertir"}
+                            </button>
                             <button onClick={fetchContent}>Actualizar</button>
                         </li>
                     </ul>
@@ -136,11 +206,7 @@ function Library() {
                 ) : (
                     <div className="content-grid">
                         {filteredContent.map((item) => (
-                            <ContentCard
-                                key={item.id}
-                                title={`${getContentTypeEmoji(item.type)} ${item.title}`}
-                                content={item.synopsis || "Sin descripción"}
-                            />
+                            <ContentCard key={item.id} item={item} />
                         ))}
                     </div>
                 )}

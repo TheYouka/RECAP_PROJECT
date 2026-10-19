@@ -1,0 +1,11 @@
+# Seed verification note
+- Reconciliación: antes de empezar no existían recap.db ni recap.db.bak (nada que respaldar), nada en :8000, sin scripts temporales. recap.db fue creada por uvicorn al arrancar (DATABASE_URL de .env, valor no mostrado).
+- Ejecutado: uvicorn app.main:app --port 8000 (iniciado por mí, detenido al final) + script temporal seed_tmp.py (stdlib; POST /content/ y POST /content/{id}/bookmark; idempotente por título). Script, uv.err y uv.out eliminados.
+- ContentType solo tiene `movie` y `music` -> 5 + 5 = 10 items.
+- Covers verificados HTTP 200 con image/*: las 10 (Wikimedia upload.wikimedia.org: png/jpeg; iTunes mzstatic 600x600bb.jpg: jpeg).
+- Incidente: una primera ejecución con salida silenciosa se solapó con otra y creó duplicados (ids 5,7,9,11,13,15,17). Eran filas de este mismo seed; se eliminaron vía DELETE /content/{id}. Estado final: 10 filas (ids 1,2,3,4,6,8,10,12,14,16).
+- Re-ejecución del script: sin inserciones nuevas (idempotente), conteo final 10.
+- Bookmarks (manual): Parasite, Chihiro, Pulp Fiction, Blade Runner 2049. Whiplash sin bookmark; música no admite bookmark (422 por diseño).
+- Tags: GET /tags/ = 0; GET /content/{id}/tags = [] para los 10.
+- HIT ME HARD AND SOFT total_tracks=10 (iTunes devuelve 11; la edición estándar tiene 10).
+- No se ejecutó pytest, no se modificó requirements.txt ni frontend, sin commits.
