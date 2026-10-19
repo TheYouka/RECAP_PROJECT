@@ -72,6 +72,11 @@ class Content(SQLModel, table=True):
     tags: list["Tag"] = Relationship(
         back_populates="contents", link_model=ContentTag
     )
+    # Borrar un Content quita sus PlaylistItem (no borra las Playlist).
+    playlist_items: list["PlaylistItem"] = Relationship(
+        back_populates="content",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -135,3 +140,40 @@ class Bookmark(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     content: Optional[Content] = Relationship(back_populates="bookmark")
+
+
+# ---------------------------------------------------------------------------
+# Playlist (lista ordenada de contenido definida por el usuario)
+# ---------------------------------------------------------------------------
+class Playlist(SQLModel, table=True):
+    __tablename__ = "playlist"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Borrar una Playlist borra sus PlaylistItem, no los Content.
+    items: list["PlaylistItem"] = Relationship(
+        back_populates="playlist",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# PlaylistItem (tabla puente N:M entre Playlist y Content, con orden)
+# ---------------------------------------------------------------------------
+class PlaylistItem(SQLModel, table=True):
+    __tablename__ = "playlist_item"
+
+    playlist_id: Optional[int] = Field(
+        default=None, foreign_key="playlist.id", primary_key=True
+    )
+    content_id: Optional[int] = Field(
+        default=None, foreign_key="content.id", primary_key=True
+    )
+    position: int
+    added_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    playlist: Optional[Playlist] = Relationship(back_populates="items")
+    content: Optional[Content] = Relationship(back_populates="playlist_items")
