@@ -3,8 +3,29 @@ import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import ContentCard from "../components/ContentCard";
 
+// Valores de content.type según el modelo de datos (ContentType: movie | music).
+// Series y Documentales aún no existen en el modelo, por eso no tienen valores.
+// "Otros" agrupa cualquier tipo que no esté asignado a otro botón.
+const TYPE_FILTERS = [
+    { id: "all", label: "Todos" },
+    { id: "movie", label: "Películas", types: ["movie"] },
+    { id: "series", label: "Series", types: [] },
+    { id: "music", label: "Música", types: ["music"] },
+    { id: "documentary", label: "Documentales", types: [] },
+    { id: "other", label: "Otros", isOther: true },
+];
+
+const KNOWN_TYPES = TYPE_FILTERS.flatMap((filter) => filter.types ?? []);
+
+const matchesFilter = (item, filter) => {
+    if (filter.id === "all") return true;
+    if (filter.isOther) return !KNOWN_TYPES.includes(item.type);
+    return filter.types.includes(item.type);
+};
+
 function Library() {
     const [content, setContent] = useState([]);
+    const [activeFilter, setActiveFilter] = useState("all");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -36,6 +57,9 @@ function Library() {
         }
     };
 
+    const currentFilter = TYPE_FILTERS.find((filter) => filter.id === activeFilter);
+    const filteredContent = content.filter((item) => matchesFilter(item, currentFilter));
+
     return (
         <>
             <Navbar />
@@ -58,12 +82,17 @@ function Library() {
                 <div>
                     <ul>
                         <li>
-                            <button>Todos</button>
-                            <button>Películas</button>
-                            <button>Series</button>
-                            <button>Música</button>
-                            <button>Documentales</button>
-                            <button>Otros</button>
+                            {TYPE_FILTERS.map((filter) => (
+                                <button
+                                    key={filter.id}
+                                    type="button"
+                                    className={`type-filter${activeFilter === filter.id ? " active" : ""}`}
+                                    aria-pressed={activeFilter === filter.id}
+                                    onClick={() => setActiveFilter(filter.id)}
+                                >
+                                    {filter.label}
+                                </button>
+                            ))}
                         </li>
                     </ul>
                 </div>
@@ -85,9 +114,11 @@ function Library() {
                     <p className="error">{error}</p>
                 ) : content.length === 0 ? (
                     <p>No hay contenido disponible. ¡Agrega algo primero!</p>
+                ) : filteredContent.length === 0 ? (
+                    <p>No hay contenido de este tipo</p>
                 ) : (
                     <div className="content-grid">
-                        {content.map((item) => (
+                        {filteredContent.map((item) => (
                             <ContentCard
                                 key={item.id}
                                 title={`${getContentTypeEmoji(item.type)} ${item.title}`}
@@ -98,7 +129,12 @@ function Library() {
                 )}
             </div>
 
-            
+            <style>{`
+                .type-filter.active {
+                    background: #333;
+                    color: white;
+                }
+            `}</style>
         </>
     );
 }
