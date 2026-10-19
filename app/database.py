@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine, select
 
 # Importar los modelos registra sus tablas en SQLModel.metadata
 # para que create_db_and_tables() las cree.
@@ -16,9 +16,24 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./recap.db")
 engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
 
 
+# Playlists que siempre deben existir (arrancan vacías).
+DEFAULT_PLAYLISTS = ["Watchlater", "Vistas", "Viendo", "Recien añadidas"]
+
+
+def create_default_playlists() -> None:
+    """Crea las playlists por defecto que aún no existan (idempotente, por nombre)."""
+    with Session(engine) as session:
+        existing = set(session.exec(select(models.Playlist.name)).all())
+        for name in DEFAULT_PLAYLISTS:
+            if name not in existing:
+                session.add(models.Playlist(name=name))
+        session.commit()
+
+
 def create_db_and_tables() -> None:
-    """Crea el archivo de base de datos y todas las tablas registradas en SQLModel."""
+    """Crea el archivo de base de datos, las tablas y las playlists por defecto."""
     SQLModel.metadata.create_all(engine)
+    create_default_playlists()
 
 
 def get_session():
