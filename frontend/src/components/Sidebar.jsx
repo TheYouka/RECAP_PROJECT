@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 
 function Sidebar(){
 
@@ -9,19 +10,19 @@ function Sidebar(){
             <ul>
 
                 <li>
-                    <a href="">Inicio</a>
+                    <Link to="/">Inicio</Link>
                 </li>
 
                 <li>
-                    <a href="">Libreria</a>
+                    <Link to="/library">Libreria</Link>
                 </li>
 
                 <li>
-                    <a href="">Watchlater</a>
+                    <Link to="/watchlater">Watchlater</Link>
                 </li>
 
                 <li>
-                    <a href="">Tags</a>
+                    <Link to="/tags">Tags</Link>
                 </li>
 
             </ul>
