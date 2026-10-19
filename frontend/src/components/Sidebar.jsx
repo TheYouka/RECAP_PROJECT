@@ -18,7 +18,7 @@ function Sidebar(){
                 </li>
 
                 <li>
-                    <Link to="/watchlater">Watchlater</Link>
+                    <Link to="/playlists">Playlists</Link>
                 </li>
 
                 <li>
