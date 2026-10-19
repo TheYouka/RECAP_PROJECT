@@ -73,7 +73,24 @@ function Library() {
                     <ul>
                         <li>
                             <button>Filtros</button>
-                            <button>Ordenar</button>
+                            
+                            <select>
+                                <option value="fecha_agregado">Fecha de agregado</option>
+                                <option value="titulo">Título</option>
+                                <option value="anio_lanzamiento">Año de lanzamiento</option>
+                                <option value="calificacion_personal">Calificación personal</option>
+                                <option value="duracion">Duración</option>
+                                <option value="ultima_actividad">Última actividad</option>
+                                <option value="cantidad_elementos">Cantidad de elementos</option>
+                                <option value="cantidad_etiquetas">Cantidad de etiquetas</option>
+                                <option value="estado">Estado</option>
+                                <option value="director_artista_creador">Director/Artista/Creador</option>
+                                <option value="genero">Género</option>
+                                <option value="progreso">Progreso</option>
+                                <option value="fecha_finalizacion">Fecha de finalización</option>
+                                <option value="favoritos">Favoritos</option>
+                                <option value="orden_personalizado">Orden personalizado</option>
+                            </select>
                             <button onClick={fetchContent}>Actualizar</button>
                         </li>
                     </ul>
