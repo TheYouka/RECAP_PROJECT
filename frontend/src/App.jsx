@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import './App.css'
 import Home from './pages/Home'
 import Library from './pages/Library'
 import Playlists from './pages/Playlists'

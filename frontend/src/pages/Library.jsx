@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import ContentCard from "../components/ContentCard";
-import BookmarkModal from "../components/BookmarkModal";
-import CreateContentModal from "./Modales/CreateContentModal";
+import CreateContentModal from "../components/Modales/CreateContentModal";
 
 // Valores de content.type según el modelo de datos (ContentType: movie | music).
 // Series y Documentales aún no existen en el modelo, por eso no tienen valores.
@@ -219,15 +218,9 @@ function Library() {
                 )}
             </div>
 
-            {showCreateModal && <CreateContentModal />}
+            {showCreateModal && <CreateContentModal onClose={() => setShowCreateModal(false)} />}
 
-            {bookmarkItem && (
-                <BookmarkModal
-                    item={bookmarkItem}
-                    onClose={closeBookmarkModal}
-                    onSaved={handleBookmarkSaved}
-                />
-            )}
+            
 
             <style>{`
                 .type-filter.active {
