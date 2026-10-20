@@ -10,8 +10,8 @@ const TYPE_LABELS = {
     music: "🎵 Música",
 };
 
-function ContentCard({ item }) {
-    const { title, type, status, synopsis, cover_url, rating, external_link, movie, album } = item;
+function ContentCard({ item, onBookmarkClick }) {
+    const { title, type, status, synopsis, cover_url, rating, external_link, movie, album, bookmark } = item;
 
     // Datos específicos según el tipo
     const creator = type === "movie" ? movie?.director : album?.artist;
@@ -56,6 +56,20 @@ function ContentCard({ item }) {
                     </span>
 
                     {synopsis && <p className="content-card__synopsis">{synopsis}</p>}
+
+                    {type === "movie" && bookmark && (
+                        <p className="content-card__meta">Separador: {bookmark.position}</p>
+                    )}
+
+                    {type === "movie" && (
+                        <button
+                            type="button"
+                            className="content-card__bookmark-btn"
+                            onClick={() => onBookmarkClick?.(item)}
+                        >
+                            {bookmark ? "Editar separador" : "Separador"}
+                        </button>
+                    )}
 
                     {external_link && (
                         <a
@@ -151,6 +165,11 @@ function ContentCard({ item }) {
                     -webkit-line-clamp: 4;
                     -webkit-box-orient: vertical;
                     overflow: hidden;
+                }
+                .content-card__bookmark-btn {
+                    align-self: flex-start;
+                    margin-top: 4px;
+                    font-size: 12px;
                 }
                 .content-card__link {
                     font-size: 12px;

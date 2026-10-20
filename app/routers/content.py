@@ -14,6 +14,7 @@ from app.models import (
     Movie,
     Tag,
 )
+from app.routers.bookmarks import BookmarkRead, _to_read as _bookmark_to_read
 from app.routers.tags import TagRead
 
 router = APIRouter(prefix="/content", tags=["content"])
@@ -85,6 +86,7 @@ class ContentRead(BaseModel):
     created_at: datetime
     movie: Optional[MovieData] = None
     album: Optional[AlbumData] = None
+    bookmark: Optional[BookmarkRead] = None
 
 
 def _to_read(content: Content) -> ContentRead:
@@ -116,6 +118,7 @@ def _to_read(content: Content) -> ContentRead:
         created_at=content.created_at,
         movie=movie,
         album=album,
+        bookmark=_bookmark_to_read(content.bookmark) if content.bookmark else None,
     )
 
 

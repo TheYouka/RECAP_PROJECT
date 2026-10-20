@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import ContentCard from "../components/ContentCard";
+import BookmarkModal from "../components/BookmarkModal";
+import CreateContentModal from "./Modales/CreateContentModal";
 
 // Valores de content.type según el modelo de datos (ContentType: movie | music).
 // Series y Documentales aún no existen en el modelo, por eso no tienen valores.
@@ -77,6 +79,8 @@ function Library() {
     const [sortReversed, setSortReversed] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [bookmarkItem, setBookmarkItem] = useState(null); // item en edición, null = modal cerrado
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     useEffect(() => {
         fetchContent();
@@ -98,12 +102,11 @@ function Library() {
         }
     };
 
-    const getContentTypeEmoji = (type) => {
-        switch (type) {
-            case "movie": return "🎬";
-            case "music": return "🎵";
-            default: return "📺";
-        }
+    const closeBookmarkModal = useCallback(() => setBookmarkItem(null), []);
+
+    const handleBookmarkSaved = () => {
+        setBookmarkItem(null);
+        fetchContent();
     };
 
     const currentFilter = TYPE_FILTERS.find((filter) => filter.id === activeFilter);
@@ -121,6 +124,8 @@ function Library() {
         }
         setSortBy(selected);
     };
+
+    console.log(setShowCreateModal);
 
     return (
         <>
@@ -162,6 +167,8 @@ function Library() {
                                 {sortReversed ? "↑ Invertido" : "↕ Invertir"}
                             </button>
                             <button onClick={fetchContent}>Actualizar</button>
+                            <button type="button" onClick={() => setShowCreateModal(true)}>Agregar</button>
+
                         </li>
                     </ul>
                 </div>
@@ -206,11 +213,21 @@ function Library() {
                 ) : (
                     <div className="content-grid">
                         {filteredContent.map((item) => (
-                            <ContentCard key={item.id} item={item} />
+                            <ContentCard key={item.id} item={item} onBookmarkClick={setBookmarkItem} />
                         ))}
                     </div>
                 )}
             </div>
+
+            {showCreateModal && <CreateContentModal />}
+
+            {bookmarkItem && (
+                <BookmarkModal
+                    item={bookmarkItem}
+                    onClose={closeBookmarkModal}
+                    onSaved={handleBookmarkSaved}
+                />
+            )}
 
             <style>{`
                 .type-filter.active {
