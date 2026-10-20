@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -81,6 +82,7 @@ class ContentRead(BaseModel):
     external_id: Optional[str] = None
     rating: Optional[int] = None
     external_link: Optional[str] = None
+    created_at: datetime
     movie: Optional[MovieData] = None
     album: Optional[AlbumData] = None
 
@@ -111,6 +113,7 @@ def _to_read(content: Content) -> ContentRead:
         external_id=content.external_id,
         rating=content.rating,
         external_link=content.external_link,
+        created_at=content.created_at,
         movie=movie,
         album=album,
     )

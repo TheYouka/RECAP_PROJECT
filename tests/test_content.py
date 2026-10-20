@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
 from fastapi.testclient import TestClient
@@ -33,6 +35,25 @@ def client(test_session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+def test_created_at_is_exposed(client):
+    response = client.post(
+        "/content/",
+        json={
+            "title": "Recent Movie",
+            "type": "movie",
+            "movie": {"duration_minutes": 120},
+        },
+    )
+
+    assert response.status_code == 201
+    created_at = response.json()["created_at"]
+    datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+
+    list_response = client.get("/content/")
+    assert list_response.status_code == 200
+    assert list_response.json()[0]["created_at"] == created_at
 
 
 def test_create_content(client):
