@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Sidebar from "../components/sidebar";
 import Navbar from "../components/Navbar"
 
@@ -17,10 +18,10 @@ function Playlists(){
         
             <div className="defaultPlaylist-Container">
                 <ul>
-                    <li>WatchLater</li>
-                    <li>Vistos</li>
-                    <li>Viendo</li>
-                    <li>Recien añadidas</li>
+                    <li><Link to="/playlist/watchlater">WatchLater</Link></li>
+                    <li><Link to="/playlist/vistos">Vistos</Link></li>
+                    <li><Link to="/playlist/viendo">Viendo</Link></li>
+                    <li><Link to="/playlist/recien-añadidas">Recien añadidas</Link></li>
                     <button>Añadir playlist</button>
 
                 </ul>
@@ -39,6 +40,7 @@ function Playlists(){
 
 
 };
+
 
 
 export default Playlists;
