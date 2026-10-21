@@ -2,11 +2,19 @@ import { useState, useRef, useEffect } from "react";
 
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg"];
 
-function CreateContentModal({ onClose }){
+function CreateContentModal({ onClose, onSaved }){
 
     const fileInputRef = useRef(null);          // referencia al <input type="file"> oculto
     const [coverFile, setCoverFile] = useState(null);       // archivo elegido (para enviarlo después)
     const [coverPreview, setCoverPreview] = useState(null); // URL temporal para mostrar la imagen
+    const [step, setStep] = useState(0);                    // paso actual: 0, 1 o 2
+    const [type, setType] = useState("movie");              // define qué campos se piden en el paso 2
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState(null);
+
+    const LAST_STEP = 2;
+    const nextStep = () => setStep((s) => Math.min(s + 1, LAST_STEP));
+    const prevStep = () => setStep((s) => Math.max(s - 1, 0));
 
     // Libera la URL temporal cuando cambia la imagen o se cierra el modal
     useEffect(() => {
@@ -29,6 +37,64 @@ function CreateContentModal({ onClose }){
 
         setCoverFile(file);
         setCoverPreview(URL.createObjectURL(file));
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setSaveError(null);
+
+        const form = event.target;
+        const data = new FormData(form);
+
+        // rating llega como texto o null si no se marcó ninguna estrella
+        const ratingRaw = data.get("rating");
+
+        const payload = {
+            title: data.get("title"),
+            type,
+            status: data.get("status") || "plan_to_watch",
+            synopsis: data.get("synopsis") || null,
+            external_id: data.get("external_id") || null,
+            rating: ratingRaw ? Number(ratingRaw) : null,
+            external_link: data.get("external_link") || null,
+        };
+
+        if (type === "movie") {
+            payload.movie = {
+                duration_minutes: Number(data.get("duration_minutes")),
+                release_year: data.get("release_year") ? Number(data.get("release_year")) : null,
+                director: data.get("director") || null,
+            };
+        } else {
+            payload.album = {
+                artist: data.get("artist"),
+                release_year: data.get("release_year") ? Number(data.get("release_year")) : null,
+                total_tracks: data.get("total_tracks") ? Number(data.get("total_tracks")) : null,
+            };
+        }
+        try {
+            setSaving(true);
+            const response = await fetch("http://localhost:8000/content/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+                
+            }
+
+            const created = await response.json();
+            onSaved?.(created);
+            onClose();
+        } catch (err) {
+            console.error("Error al guardar el contenido:", err);
+
+            setSaveError("No se pudo guardar el contenido.");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return(
@@ -59,13 +125,19 @@ function CreateContentModal({ onClose }){
             <div className="leftSide">
 
                 <ol className="steps">
-                    <li>
+                    <li className={step === 0 ? "active" : ""} aria-current={step === 0 ? "step" : undefined}>
                         <h3>Selecciona el contenido</h3>
-                        <p>Elige un álbum de tu dispositivo.</p>
+                        <p>Llena la configuracion basica de tu contenido</p>
                     </li>
-                    <li>
+
+                    <li className={step === 1 ? "active" : ""} aria-current={step === 1 ? "step" : undefined}>
                         <h3>Configura y guarda</h3>
-                        <p>Añade detalles y elige en qué playlist(s) guardarlo.</p>
+                        <p>Añade detalles en base al tipo de contenido</p>
+                    </li>
+
+                    <li className={step === 2 ? "active" : ""} aria-current={step === 2 ? "step" : undefined}>
+                        <h3>Sinopsis y detalles</h3>
+                        <p>Selecciona informacion adicional</p>
                     </li>
                 </ol>
 
@@ -88,8 +160,13 @@ function CreateContentModal({ onClose }){
 
 
             {/* Columna derecha: formulario */}
-            <form className="detallesContenido-Container">
+            <form className="detallesContenido-Container" onSubmit={handleSubmit}>
                 <h3>Detalles del contenido</h3>
+
+                {/* Los pasos se ocultan con "hidden" (no se desmontan) para conservar lo escrito */}
+
+                {/* PASO 1: información básica */}
+                <div hidden={step !== 0}>
 
                 <div className="coverPreview">
                     {coverPreview ? (
@@ -105,7 +182,12 @@ function CreateContentModal({ onClose }){
                     <input id="content-title" name="title" type="text" />
 
                     <label htmlFor="content-type">Tipo</label>
-                    <select id="content-type" name="type">
+                    <select
+                        id="content-type"
+                        name="type"
+                        value={type}
+                        onChange={(event) => setType(event.target.value)}
+                    >
                         <option value="movie">Película</option>
                         <option value="music">Música</option>
                     </select>
@@ -131,12 +213,66 @@ function CreateContentModal({ onClose }){
                     <label><input type="radio" name="rating" value="5" /> ★</label>
                 </fieldset>
 
+                </div>
+
+                {/* PASO 2: detalles según el tipo (Movie o Album) */}
+                <div hidden={step !== 1}>
+
+                    {type === "movie" && (
+                        <div className="fields">
+                            <label htmlFor="movie-duration">Duración (minutos)</label>
+                            <input id="movie-duration" name="duration_minutes" type="number" />
+
+                            <label htmlFor="movie-year">Año de estreno</label>
+                            <input id="movie-year" name="release_year" type="number" />
+
+                            <label htmlFor="movie-director">Director</label>
+                            <input id="movie-director" name="director" type="text" />
+                        </div>
+                    )}
+
+                    {type === "music" && (
+                        <div className="fields">
+                            <label htmlFor="album-artist">Artista</label>
+                            <input id="album-artist" name="artist" type="text" />
+
+                            <label htmlFor="album-year">Año de lanzamiento</label>
+                            <input id="album-year" name="release_year" type="number" />
+
+                            <label htmlFor="album-tracks">Número de pistas</label>
+                            <input id="album-tracks" name="total_tracks" type="number" />
+                        </div>
+                    )}
+
+                </div>
+
+                {/* PASO 3: sinopsis y detalles avanzados */}
+                <div hidden={step !== 2}>
+                    <div className="fields">
+                        <label htmlFor="content-synopsis">Sinopsis</label>
+                        <textarea id="content-synopsis" name="synopsis" rows="4" />
+
+                        <label htmlFor="content-external-id">ID externo (TMDB o Spotify)</label>
+                        <input id="content-external-id" name="external_id" type="text" />
+
+                        <label htmlFor="content-external-link">Enlace externo</label>
+                        <input id="content-external-link" name="external_link" type="url" />
+                    </div>
+                </div>
+
                 <hr />
 
+                {saveError && <p className="error">{saveError}</p>}
 
                 <div className="modal-actions">
                     <button type="button" onClick={onClose}>Cancelar</button>
-                    <button type="submit">Guardar en mi librería</button>
+                    {step > 0 && <button type="button" onClick={prevStep}>Anterior</button>}
+                    {step < LAST_STEP && <button type="button" onClick={nextStep}>Siguiente</button>}
+                    {step === LAST_STEP && (
+                        <button type="submit" disabled={saving}>
+                            {saving ? "Guardando..." : "Guardar en mi librería"}
+                        </button>
+                    )}
                 </div>
 
             </form>
@@ -171,6 +307,9 @@ function CreateContentModal({ onClose }){
                 aspect-ratio: 2 / 3;
                 object-fit: cover;
                 display: block;
+            }
+            .modal .steps li.active h3 {
+                text-decoration: underline;
             }
             .modal .modal-header {
                 grid-column: 1 / -1;

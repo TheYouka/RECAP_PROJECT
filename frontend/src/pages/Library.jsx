@@ -218,7 +218,12 @@ function Library() {
                 )}
             </div>
 
-            {showCreateModal && <CreateContentModal onClose={() => setShowCreateModal(false)} />}
+            {showCreateModal && (
+                <CreateContentModal
+                    onClose={() => setShowCreateModal(false)}
+                    onSaved={fetchContent}
+                />
+            )}
 
             
 
