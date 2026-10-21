@@ -10,7 +10,7 @@ const TYPE_LABELS = {
     music: "🎵 Música",
 };
 
-function ContentCard({ item, onBookmarkClick }) {
+function ContentCard({ item, onBookmarkClick, selected = false, onSelectChange }) {
     const { title, type, status, synopsis, cover_url, rating, external_link, movie, album, bookmark } = item;
 
     // Datos específicos según el tipo
@@ -26,6 +26,13 @@ function ContentCard({ item, onBookmarkClick }) {
                     ) : (
                         <div className="content-card__no-cover">Sin portada</div>
                     )}
+                    <input
+                        type="checkbox"
+                        className="content-card__select"
+                        checked={selected}
+                        onChange={() => onSelectChange?.(item.id)}
+                        aria-label={`Seleccionar ${title}`}
+                    />
                     {rating != null && (
                         <span className="content-card__rating">★ {rating}/10</span>
                     )}
@@ -118,10 +125,31 @@ function ContentCard({ item, onBookmarkClick }) {
                     color: #777;
                     font-size: 14px;
                 }
-                .content-card__rating {
+                .content-card__select {
+                    -webkit-appearance: none;
+                    appearance: none;
                     position: absolute;
                     top: 6px;
                     right: 6px;
+                    width: 20px;
+                    height: 20px;
+                    margin: 0;
+                    border: 2px solid #fff;
+                    border-radius: 4px;
+                    background: rgba(0, 0, 0, 0.4);
+                    cursor: pointer;
+                }
+                .content-card__select:checked {
+                    background: #4f46e5;
+                }
+                .content-card__select:focus-visible {
+                    outline: 2px solid #4f46e5;
+                    outline-offset: 2px;
+                }
+                .content-card__rating {
+                    position: absolute;
+                    top: 6px;
+                    left: 6px;
                     padding: 2px 6px;
                     border-radius: 4px;
                     background: rgba(0, 0, 0, 0.75);

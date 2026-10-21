@@ -80,6 +80,7 @@ function Library() {
     const [error, setError] = useState(null);
     const [bookmarkItem, setBookmarkItem] = useState(null); // item en edición, null = modal cerrado
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]); // ids de los elementos seleccionados
 
     useEffect(() => {
         fetchContent();
@@ -114,6 +115,27 @@ function Library() {
         sortBy,
         sortReversed
     );
+
+    // Agrega o quita un elemento de la lista de seleccionados
+    const toggleSelected = (id) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((selectedId) => selectedId !== id) : [...prev, id]
+        );
+    };
+
+    // "Seleccionar todos" actúa sobre los elementos visibles (respeta el filtro de tipo)
+    const allSelected =
+        filteredContent.length > 0 &&
+        filteredContent.every((item) => selectedIds.includes(item.id));
+
+    const toggleSelectAll = () => {
+        const visibleIds = filteredContent.map((item) => item.id);
+        setSelectedIds((prev) =>
+            allSelected
+                ? prev.filter((id) => !visibleIds.includes(id))
+                : [...new Set([...prev, ...visibleIds])]
+        );
+    };
 
     const handleSortChange = (event) => {
         const selected = event.target.value;
@@ -193,7 +215,9 @@ function Library() {
                 <div>
                     <ul>
                         <li>
-                            <button>Seleccionar todo</button>
+                            <button type="button" onClick={toggleSelectAll}>
+                                {allSelected ? "Deseleccionar todos" : "Seleccionar todos"}
+                            </button>
                             <button>Agregar Separador</button>
                         </li>
                     </ul>
@@ -212,7 +236,13 @@ function Library() {
                 ) : (
                     <div className="content-grid">
                         {filteredContent.map((item) => (
-                            <ContentCard key={item.id} item={item} onBookmarkClick={setBookmarkItem} />
+                            <ContentCard
+                                key={item.id}
+                                item={item}
+                                onBookmarkClick={setBookmarkItem}
+                                selected={selectedIds.includes(item.id)}
+                                onSelectChange={toggleSelected}
+                            />
                         ))}
                     </div>
                 )}
