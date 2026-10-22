@@ -80,6 +80,7 @@ function Library() {
     const [error, setError] = useState(null);
     const [bookmarkItem, setBookmarkItem] = useState(null); // item en edición, null = modal cerrado
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [updateModal, setUpdateCreateModal ] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]); // ids de los elementos seleccionados
 
     useEffect(() => {
@@ -146,6 +147,9 @@ function Library() {
         setSortBy(selected);
     };
 
+
+    // Elemento a actualizar: el único seleccionado (el botón "Actualizar" solo aparece con 1)
+    const itemToUpdate = content.find((item) => item.id === selectedIds[0]);
 
     // Borrar todos los contentID seleccionados
     const deleteSelectedElements = async () => {
@@ -236,7 +240,7 @@ function Library() {
                             >
                                 {sortReversed ? "↑ Invertido" : "↕ Invertir"}
                             </button>
-                            <button onClick={fetchContent}>Actualizar</button>
+                            <button onClick={fetchContent}>Fetch</button>
                             <button type="button" onClick={() => setShowCreateModal(true)}>Agregar</button>
 
                         </li>
@@ -267,6 +271,8 @@ function Library() {
                             <button type="button" onClick={toggleSelectAll}>
                                 {allSelected ? "Deseleccionar todos" : "Seleccionar todos"}
                             </button>
+
+                            
                             <button>Agregar Separador</button>
                         </li>
                     </ul>
@@ -276,18 +282,18 @@ function Library() {
             {/*Botones de borrar y actualizar*/}
             <div>
                 {selectedIds.length != 0 && 
-                    <>
                         <button type="button" onClick={deleteSelectedElements}>
                             Borrar
                         </button>
-                        
-                        <button type="button">
-                            Actualizar
-                        </button>
-                    
-                    </>
-                    
                 }
+
+                {selectedIds.length === 1 && 
+                    <button type="button" onClick={() => setUpdateCreateModal(true)}>
+                        Actualizar
+                    </button>
+
+                }
+
             </div>
 
 
@@ -314,13 +320,26 @@ function Library() {
                     </div>
                 )}
             </div>
+            
 
+            {/*Agregar un contenido*/}
             {showCreateModal && (
                 <CreateContentModal
                     onClose={() => setShowCreateModal(false)}
                     onSaved={fetchContent}
                 />
             )}
+
+            {/*Actualizar un contenido existente*/}
+            {updateModal && itemToUpdate &&
+                <CreateContentModal
+                    key={itemToUpdate.id}
+                    item={itemToUpdate}
+                    onClose={() => setUpdateCreateModal(false)}
+                    onSaved={fetchContent}
+                />
+                
+            }
 
             
 

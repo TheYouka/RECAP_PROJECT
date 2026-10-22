@@ -2,13 +2,19 @@ import { useState, useRef, useEffect } from "react";
 
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg"];
 
-function CreateContentModal({ onClose, onSaved }){
+// Si recibe `item`, el modal funciona en modo "actualizar": se llena con los datos
+// del elemento y al guardar hace PATCH. Sin `item`, es el modo "agregar" (POST).
+function CreateContentModal({ onClose, onSaved, item }){
+
+    const isEdit = Boolean(item);
+    const movieData = item?.movie;
+    const albumData = item?.album;
 
     const fileInputRef = useRef(null);          // referencia al <input type="file"> oculto
     const [coverFile, setCoverFile] = useState(null);       // archivo elegido (para enviarlo después)
-    const [coverPreview, setCoverPreview] = useState(null); // URL temporal para mostrar la imagen
+    const [coverPreview, setCoverPreview] = useState(item?.cover_url ?? null); // portada actual o URL temporal
     const [step, setStep] = useState(0);                    // paso actual: 0, 1 o 2
-    const [type, setType] = useState("movie");              // define qué campos se piden en el paso 2
+    const [type, setType] = useState(item?.type ?? "movie"); // define qué campos se piden en el paso 2
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState(null);
 
@@ -47,17 +53,24 @@ function CreateContentModal({ onClose, onSaved }){
         const data = new FormData(form);
 
         // rating llega como texto o null si no se marcó ninguna estrella
-        const ratingRaw = data.get("rating");
+        const ratingRaw = data.get("rating")*2;
 
         const payload = {
             title: data.get("title"),
-            type,
-            status: data.get("status") || "plan_to_watch",
+            status: data.get("status") || item?.status || "plan_to_watch",
             synopsis: data.get("synopsis") || null,
             external_id: data.get("external_id") || null,
-            rating: ratingRaw ? Number(ratingRaw) : null,
             external_link: data.get("external_link") || null,
         };
+
+        if (isEdit) {
+            // El tipo no se puede cambiar una vez creado, por eso no se envía.
+            // La calificación solo se envía si se eligió una, para no borrar la actual.
+            if (ratingRaw) payload.rating = Number(ratingRaw);
+        } else {
+            payload.type = type;
+            payload.rating = ratingRaw ? Number(ratingRaw) : null;
+        }
 
         if (type === "movie") {
             payload.movie = {
@@ -74,8 +87,13 @@ function CreateContentModal({ onClose, onSaved }){
         }
         try {
             setSaving(true);
-            const response = await fetch("http://localhost:8000/content/", {
-                method: "POST",
+            // Actualizar: PATCH /content/{id} (el id sale del item). Agregar: POST /content/
+            const url = isEdit
+                ? `http://localhost:8000/content/${item.id}`
+                : "http://localhost:8000/content/";
+
+            const response = await fetch(url, {
+                method: isEdit ? "PATCH" : "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
@@ -114,8 +132,8 @@ function CreateContentModal({ onClose, onSaved }){
             {/* Encabezado */}
             <div className="modal-header">
                 <div>
-                    <h3 id="createContent-title">Agregar contenido</h3>
-                    <p>Busca y guarda el contenido en tu librería.</p>
+                    <h3 id="createContent-title">{isEdit ? "Actualizar contenido" : "Agregar contenido"}</h3>
+                    <p>{isEdit ? "Modifica los datos y guarda los cambios." : "Busca y guarda el contenido en tu librería."}</p>
                 </div>
                 <button type="button" aria-label="Cerrar" onClick={onClose}>✕</button>
             </div>
@@ -179,7 +197,7 @@ function CreateContentModal({ onClose, onSaved }){
 
                 <div className="fields">
                     <label htmlFor="content-title">Título</label>
-                    <input id="content-title" name="title" type="text" />
+                    <input id="content-title" name="title" type="text" defaultValue={item?.title ?? ""} />
 
                     <label htmlFor="content-type">Tipo</label>
                     <select
@@ -187,6 +205,7 @@ function CreateContentModal({ onClose, onSaved }){
                         name="type"
                         value={type}
                         onChange={(event) => setType(event.target.value)}
+                        disabled={isEdit}
                     >
                         <option value="movie">Película</option>
                         <option value="music">Música</option>
@@ -198,19 +217,24 @@ function CreateContentModal({ onClose, onSaved }){
 
                 <fieldset className="status">
                     <legend>Estado</legend>
-                    <label><input type="radio" name="status" value="plan_to_watch" /> Por ver</label>
-                    <label><input type="radio" name="status" value="watching" /> Viendo</label>
-                    <label><input type="radio" name="status" value="completed" /> Visto</label>
-                    <label><input type="radio" name="status" value="paused" /> Pausado</label>
+                    <label><input type="radio" name="status" value="plan_to_watch" defaultChecked={item?.status === "plan_to_watch"} /> Por ver</label>
+                    <label><input type="radio" name="status" value="watching" defaultChecked={item?.status === "watching"} /> Viendo</label>
+                    <label><input type="radio" name="status" value="completed" defaultChecked={item?.status === "completed"} /> Visto</label>
+                    <label><input type="radio" name="status" value="paused" defaultChecked={item?.status === "paused"} /> Pausado</label>
                 </fieldset>
 
                 <fieldset className="rating">
                     <legend>Calificación personal (opcional)</legend>
-                    <label><input type="radio" name="rating" value="1" /> ★</label>
-                    <label><input type="radio" name="rating" value="2" /> ★</label>
-                    <label><input type="radio" name="rating" value="3" /> ★</label>
-                    <label><input type="radio" name="rating" value="4" /> ★</label>
-                    <label><input type="radio" name="rating" value="5" /> ★</label>
+                    {[1, 2, 3, 4, 5].map((value) => (
+                        <label key={value}>
+                            <input
+                                type="radio"
+                                name="rating"
+                                value={value}
+                                defaultChecked={item?.rating === value}
+                            /> ★
+                        </label>
+                    ))}
                 </fieldset>
 
                 </div>
@@ -221,26 +245,26 @@ function CreateContentModal({ onClose, onSaved }){
                     {type === "movie" && (
                         <div className="fields">
                             <label htmlFor="movie-duration">Duración (minutos)</label>
-                            <input id="movie-duration" name="duration_minutes" type="number" />
+                            <input id="movie-duration" name="duration_minutes" type="number" defaultValue={movieData?.duration_minutes ?? ""} />
 
                             <label htmlFor="movie-year">Año de estreno</label>
-                            <input id="movie-year" name="release_year" type="number" />
+                            <input id="movie-year" name="release_year" type="number" defaultValue={movieData?.release_year ?? ""} />
 
                             <label htmlFor="movie-director">Director</label>
-                            <input id="movie-director" name="director" type="text" />
+                            <input id="movie-director" name="director" type="text" defaultValue={movieData?.director ?? ""} />
                         </div>
                     )}
 
                     {type === "music" && (
                         <div className="fields">
                             <label htmlFor="album-artist">Artista</label>
-                            <input id="album-artist" name="artist" type="text" />
+                            <input id="album-artist" name="artist" type="text" defaultValue={albumData?.artist ?? ""} />
 
                             <label htmlFor="album-year">Año de lanzamiento</label>
-                            <input id="album-year" name="release_year" type="number" />
+                            <input id="album-year" name="release_year" type="number" defaultValue={albumData?.release_year ?? ""} />
 
                             <label htmlFor="album-tracks">Número de pistas</label>
-                            <input id="album-tracks" name="total_tracks" type="number" />
+                            <input id="album-tracks" name="total_tracks" type="number" defaultValue={albumData?.total_tracks ?? ""} />
                         </div>
                     )}
 
@@ -250,13 +274,13 @@ function CreateContentModal({ onClose, onSaved }){
                 <div hidden={step !== 2}>
                     <div className="fields">
                         <label htmlFor="content-synopsis">Sinopsis</label>
-                        <textarea id="content-synopsis" name="synopsis" rows="4" />
+                        <textarea id="content-synopsis" name="synopsis" rows="4" defaultValue={item?.synopsis ?? ""} />
 
                         <label htmlFor="content-external-id">ID externo (TMDB o Spotify)</label>
-                        <input id="content-external-id" name="external_id" type="text" />
+                        <input id="content-external-id" name="external_id" type="text" defaultValue={item?.external_id ?? ""} />
 
                         <label htmlFor="content-external-link">Enlace externo</label>
-                        <input id="content-external-link" name="external_link" type="url" />
+                        <input id="content-external-link" name="external_link" type="url" defaultValue={item?.external_link ?? ""} />
                     </div>
                 </div>
 
@@ -270,7 +294,7 @@ function CreateContentModal({ onClose, onSaved }){
                     {step < LAST_STEP && <button type="button" onClick={nextStep}>Siguiente</button>}
                     {step === LAST_STEP && (
                         <button type="submit" disabled={saving}>
-                            {saving ? "Guardando..." : "Guardar en mi librería"}
+                            {saving ? "Guardando..." : isEdit ? "Guardar cambios" : "Guardar en mi librería"}
                         </button>
                     )}
                 </div>
