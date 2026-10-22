@@ -146,7 +146,56 @@ function Library() {
         setSortBy(selected);
     };
 
-    console.log(setShowCreateModal);
+
+    // Borrar todos los contentID seleccionados
+    const deleteSelectedElements = async () => {
+        // 1. Si no hay nada seleccionado, avisamos y salimos
+        if (selectedIds.length === 0) {
+            alert("No hay elementos seleccionados para borrar.");
+            return;
+        }
+
+        try {
+            // 2. Una petición DELETE por cada id; allSettled espera a todas
+            //    aunque alguna falle
+            const results = await Promise.allSettled(
+                selectedIds.map((id) =>
+                    fetch(`http://localhost:8000/content/${id}`, { method: "DELETE" })
+                )
+            );
+
+            // 3. Separamos los ids borrados de los que fallaron
+            //    (204 = borrado, 404 = ya no existía, lo contamos como borrado)
+            const deletedIds = [];
+            results.forEach((result, index) => {
+                if (
+                    result.status === "fulfilled" &&
+                    (result.value.ok || result.value.status === 404)
+                ) {
+                    deletedIds.push(selectedIds[index]);
+                }
+            });
+            const failedCount = selectedIds.length - deletedIds.length;
+
+            // 4. Quitamos de la selección solo los borrados; los fallidos
+            //    siguen seleccionados para poder reintentar
+            setSelectedIds((prev) => prev.filter((id) => !deletedIds.includes(id)));
+
+            // 5. Si alguno falló, avisamos cuántos
+            if (failedCount > 0) {
+                alert(`No se pudieron borrar ${failedCount} elemento(s).`);
+            }
+        } catch (err) {
+            console.error("Error al borrar contenido:", err);
+            alert("Ocurrió un error al borrar los elementos.");
+        } finally {
+            // 6. Siempre volvemos a pedir la lista a la API
+            await fetchContent();
+        }
+    };
+
+
+
 
     return (
         <>
@@ -223,6 +272,24 @@ function Library() {
                     </ul>
                 </div>
             </div>
+
+            {/*Botones de borrar y actualizar*/}
+            <div>
+                {selectedIds.length != 0 && 
+                    <>
+                        <button type="button" onClick={deleteSelectedElements}>
+                            Borrar
+                        </button>
+                        
+                        <button type="button">
+                            Actualizar
+                        </button>
+                    
+                    </>
+                    
+                }
+            </div>
+
 
             <div className="content-container">
                 {loading ? (
