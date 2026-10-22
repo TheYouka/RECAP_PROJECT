@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import ContentCard from "../components/contentCard";
+import { API_URL } from "../api";
 
 const SEVEN_DAYS_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 
@@ -27,7 +28,7 @@ function PlaylistView() {
             setError(null);
 
             try {
-                const response = await fetch("http://localhost:8000/content");
+                const response = await fetch(`${API_URL}/content`);
                 if (!response.ok) {
                     throw new Error("No se pudo cargar el contenido");
                 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import ContentCard from "../components/ContentCard";
+import { API_URL } from "../api";
 import CreateContentModal from "../components/Modales/CreateContentModal";
 
 // Valores de content.type según el modelo de datos (ContentType: movie | music).
@@ -89,7 +90,7 @@ function Library() {
 
     const fetchContent = async () => {
         try {
-            const response = await fetch("http://localhost:8000/content");
+            const response = await fetch(`${API_URL}/content`);
             if (!response.ok) {
                 throw new Error(`Error HTTP: ${response.status}`);
             }
@@ -164,7 +165,7 @@ function Library() {
             //    aunque alguna falle
             const results = await Promise.allSettled(
                 selectedIds.map((id) =>
-                    fetch(`http://localhost:8000/content/${id}`, { method: "DELETE" })
+                    fetch(`${API_URL}/content/${id}`, { method: "DELETE" })
                 )
             );
 

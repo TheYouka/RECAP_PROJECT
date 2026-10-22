@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { API_URL, coverSrc } from "../../api";
 
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg"];
 
@@ -12,7 +13,7 @@ function CreateContentModal({ onClose, onSaved, item }){
 
     const fileInputRef = useRef(null);          // referencia al <input type="file"> oculto
     const [coverFile, setCoverFile] = useState(null);       // archivo elegido (para enviarlo después)
-    const [coverPreview, setCoverPreview] = useState(item?.cover_url ?? null); // portada actual o URL temporal
+    const [coverPreview, setCoverPreview] = useState(coverSrc(item?.cover_url)); // portada actual o URL temporal
     const [step, setStep] = useState(0);                    // paso actual: 0, 1 o 2
     const [type, setType] = useState(item?.type ?? "movie"); // define qué campos se piden en el paso 2
     const [saving, setSaving] = useState(false);
@@ -52,8 +53,8 @@ function CreateContentModal({ onClose, onSaved, item }){
         const form = event.target;
         const data = new FormData(form);
 
-        // rating llega como texto o null si no se marcó ninguna estrella
-        const ratingRaw = data.get("rating")*2;
+        // rating llega como texto ("" si el campo está vacío); el backend usa la misma escala de 1 a 10
+        const ratingRaw = data.get("rating");
 
         const payload = {
             title: data.get("title"),
@@ -89,8 +90,8 @@ function CreateContentModal({ onClose, onSaved, item }){
             setSaving(true);
             // Actualizar: PATCH /content/{id} (el id sale del item). Agregar: POST /content/
             const url = isEdit
-                ? `http://localhost:8000/content/${item.id}`
-                : "http://localhost:8000/content/";
+                ? `${API_URL}/content/${item.id}`
+                : `${API_URL}/content/`;
 
             const response = await fetch(url, {
                 method: isEdit ? "PATCH" : "POST",
@@ -104,6 +105,32 @@ function CreateContentModal({ onClose, onSaved, item }){
             }
 
             const created = await response.json();
+
+            // Si se eligió una portada, se sube ahora que el contenido ya existe (tenemos su id).
+            // Se usa FormData sin Content-Type: el navegador pone el boundary multipart solo.
+            if (coverFile) {
+                try {
+                    const coverData = new FormData();
+                    coverData.append("file", coverFile);
+
+                    const coverResponse = await fetch(`${API_URL}/content/${created.id}/cover`, {
+                        method: "POST",
+                        body: coverData,
+                    });
+
+                    if (!coverResponse.ok) {
+                        // Intenta leer el motivo que manda el servidor (campo "detail")
+                        const errorBody = await coverResponse.json().catch(() => null);
+                        const detail = typeof errorBody?.detail === "string" ? errorBody.detail : null;
+                        throw new Error(detail ?? `Error HTTP: ${coverResponse.status}`);
+                    }
+                } catch (coverErr) {
+                    console.error("Error al subir la portada:", coverErr);
+                    alert(`El contenido se guardó, pero la portada no se pudo subir: ${coverErr.message}`);
+                }
+            }
+
+            // onSaved va DESPUÉS de la subida para que la lista refrescada ya traiga la portada nueva
             onSaved?.(created);
             onClose();
         } catch (err) {
@@ -223,19 +250,18 @@ function CreateContentModal({ onClose, onSaved, item }){
                     <label><input type="radio" name="status" value="paused" defaultChecked={item?.status === "paused"} /> Pausado</label>
                 </fieldset>
 
-                <fieldset className="rating">
-                    <legend>Calificación personal (opcional)</legend>
-                    {[1, 2, 3, 4, 5].map((value) => (
-                        <label key={value}>
-                            <input
-                                type="radio"
-                                name="rating"
-                                value={value}
-                                defaultChecked={item?.rating === value}
-                            /> ★
-                        </label>
-                    ))}
-                </fieldset>
+                <div className="rating">
+                    <label htmlFor="content-rating">Calificación personal, de 1 a 10 (opcional)</label>
+                    <input
+                        id="content-rating"
+                        name="rating"
+                        type="number"
+                        min="1"
+                        max="10"
+                        step="1"
+                        defaultValue={item?.rating ?? ""}
+                    />
+                </div>
 
                 </div>
 

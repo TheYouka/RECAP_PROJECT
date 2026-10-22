@@ -1,3 +1,5 @@
+import { coverSrc } from "../api";
+
 const STATUS_LABELS = {
     watching: "Viendo / Escuchando",
     completed: "Completado",
@@ -22,7 +24,7 @@ function ContentCard({ item, onBookmarkClick, selected = false, onSelectChange }
             <article className="content-card">
                 <div className="content-card__cover">
                     {cover_url ? (
-                        <img src={cover_url} alt={`Portada de ${title}`} loading="lazy" />
+                        <img src={coverSrc(cover_url)} alt={`Portada de ${title}`} loading="lazy" />
                     ) : (
                         <div className="content-card__no-cover">Sin portada</div>
                     )}

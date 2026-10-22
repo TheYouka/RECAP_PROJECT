@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
@@ -16,6 +16,7 @@ from app.models import (
 )
 from app.routers.bookmarks import BookmarkRead, _to_read as _bookmark_to_read
 from app.routers.tags import TagRead
+from app.services import covers
 
 router = APIRouter(prefix="/content", tags=["content"])
 
@@ -243,9 +244,45 @@ def delete_content(content_id: int, session: Session = Depends(get_session)):
     content = session.get(Content, content_id)
     if content is None:
         raise HTTPException(status_code=404, detail="Contenido no encontrado")
+    cover_url = content.cover_url  # guardamos la portada antes de borrar la fila
     session.delete(content)  # cascade borra Movie/Album/Bookmark asociados
     session.commit()
+    # Solo tras borrar en BD con éxito, quitamos los archivos locales (ignora URLs externas)
+    covers.delete_cover_files(cover_url)
     return None
+
+
+# ---------------------------------------------------------------------------
+# COVER (subida de portada local)
+# ---------------------------------------------------------------------------
+@router.post("/{content_id}/cover", response_model=ContentRead)
+def upload_cover(
+    content_id: int,
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+):
+    content = session.get(Content, content_id)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Contenido no encontrado")
+
+    # Valida y guarda miniatura + original (si falla, no deja archivos)
+    new_url, written = covers.save_cover(file)
+    old_url = content.cover_url
+
+    try:
+        content.cover_url = new_url
+        session.add(content)
+        session.commit()
+    except Exception:
+        # La BD no se actualizó: borramos los archivos nuevos para no dejar huérfanos
+        session.rollback()
+        covers.delete_files(written)
+        raise
+
+    # La BD ya apunta al archivo nuevo: ahora sí quitamos la portada local anterior
+    covers.delete_cover_files(old_url)
+    session.refresh(content)
+    return _to_read(content)
 
 
 # ---------------------------------------------------------------------------
