@@ -11,21 +11,29 @@ router = APIRouter(prefix="/tags", tags=["tags"])
 # ---------------------------------------------------------------------------
 # Schemas de entrada / salida
 # ---------------------------------------------------------------------------
+# Color hexadecimal de 6 dígitos con "#", ej. "#a78bfa" (lo que entrega <input type="color">).
+HEX_COLOR_PATTERN = r"^#[0-9a-fA-F]{6}$"
+
+
 class TagCreate(BaseModel):
     name: str = Field(min_length=1, max_length=50)
+    color: str | None = Field(default=None, pattern=HEX_COLOR_PATTERN)
 
 
 class TagUpdate(BaseModel):
-    name: str = Field(min_length=1, max_length=50)
+    # Ambos opcionales: se puede renombrar, cambiar el color, o las dos cosas.
+    name: str | None = Field(default=None, min_length=1, max_length=50)
+    color: str | None = Field(default=None, pattern=HEX_COLOR_PATTERN)
 
 
 class TagRead(BaseModel):
     id: int
     name: str
+    color: str | None = None
 
 
 def _to_read(tag: Tag) -> TagRead:
-    return TagRead(id=tag.id, name=tag.name)
+    return TagRead(id=tag.id, name=tag.name, color=tag.color)
 
 
 def _clean_name(name: str) -> str:
@@ -53,7 +61,9 @@ def create_tag(payload: TagCreate, session: Session = Depends(get_session)):
     name = _clean_name(payload.name)
     _ensure_name_available(session, name)
     ##print(TagCreate)
-    tag = Tag(name=name)
+    # El color se guarda en minúsculas para que siempre tenga el mismo formato.
+    color = payload.color.lower() if payload.color else None
+    tag = Tag(name=name, color=color)
     
     session.add(tag)
     session.commit()
@@ -90,10 +100,20 @@ def update_tag(tag_id: int, payload: TagUpdate, session: Session = Depends(get_s
     if tag is None:
         raise HTTPException(status_code=404, detail="Tag no encontrado")
 
-    name = _clean_name(payload.name)
-    _ensure_name_available(session, name, exclude_id=tag_id)
+    # model_fields_set = solo los campos que el cliente envió realmente.
+    # Así "no mandó color" (se deja igual) se distingue de "color": null (se borra).
+    sent = payload.model_fields_set
 
-    tag.name = name
+    if "name" in sent:
+        if payload.name is None:
+            raise HTTPException(status_code=422, detail="El nombre del tag no puede ser null")
+        name = _clean_name(payload.name)
+        _ensure_name_available(session, name, exclude_id=tag_id)
+        tag.name = name
+
+    if "color" in sent:
+        tag.color = payload.color.lower() if payload.color else None
+
     session.add(tag)
     session.commit()
     session.refresh(tag)

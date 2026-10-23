@@ -119,6 +119,9 @@ class Tag(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True)
+    # Color en hexadecimal "#rrggbb" (ej. "#a78bfa"). None = tag sin color.
+    # Columna agregada con ALTER TABLE, por eso es opcional.
+    color: Optional[str] = None
     
     contents: list[Content] = Relationship(
         back_populates="tags", link_model=ContentTag
