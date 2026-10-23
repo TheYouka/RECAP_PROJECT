@@ -1,0 +1,17 @@
+/* NavLink agrega la clase "active" al <a> cuyo "to" coincide con la URL actual. */
+
+.sidebar-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-container a {
+    color: #6b7280;
+    text-decoration: none;
+}
+
+/* Sección activa: texto remarcado */
+.sidebar-container a.active {
+    color: #111827;
+    font-weight: 700;
+}

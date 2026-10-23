@@ -4,6 +4,7 @@ import Sidebar from "../components/sidebar";
 import ContentCard from "../components/ContentCard";
 import { API_URL } from "../api";
 import CreateContentModal from "../components/Modales/CreateContentModal";
+import "../css/library.css";
 
 // Valores de content.type según el modelo de datos (ContentType: movie | music).
 // Series y Documentales aún no existen en el modelo, por eso no tienen valores.
@@ -344,12 +345,6 @@ function Library() {
 
             
 
-            <style>{`
-                .type-filter.active {
-                    background: #333;
-                    color: white;
-                }
-            `}</style>
         </>
     );
 }

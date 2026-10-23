@@ -17,7 +17,6 @@ function Navbar(){
             </form>
 
             
-            <a href="/login"> USER</a>
 
         </nav>
     )

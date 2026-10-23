@@ -1,4 +1,5 @@
 import { coverSrc } from "../api";
+import "../css/content-card.css";
 
 const STATUS_LABELS = {
     watching: "Viendo / Escuchando",
@@ -93,118 +94,6 @@ function ContentCard({ item, onBookmarkClick, selected = false, onSelectChange }
                 </div>
             </article>
 
-            {/* Estilos provisionales, se reemplazarán con el diseño final */}
-            <style>{`
-                .content-card {
-                    display: flex;
-                    flex-direction: column;
-                    width: 220px;
-                    min-height: 480px;
-                    border: 1px solid #ccc;
-                    border-radius: 6px;
-                    overflow: hidden;
-                    text-align: left;
-                    background: #fff;
-                    color: #222;
-                }
-                .content-card__cover {
-                    position: relative;
-                    width: 100%;
-                    aspect-ratio: 2 / 3;
-                    background: #eee;
-                }
-                .content-card__cover img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    display: block;
-                }
-                .content-card__no-cover {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100%;
-                    color: #777;
-                    font-size: 14px;
-                }
-                .content-card__select {
-                    -webkit-appearance: none;
-                    appearance: none;
-                    position: absolute;
-                    top: 6px;
-                    right: 6px;
-                    width: 20px;
-                    height: 20px;
-                    margin: 0;
-                    border: 2px solid #fff;
-                    border-radius: 4px;
-                    background: rgba(0, 0, 0, 0.4);
-                    cursor: pointer;
-                }
-                .content-card__select:checked {
-                    background: #4f46e5;
-                }
-                .content-card__select:focus-visible {
-                    outline: 2px solid #4f46e5;
-                    outline-offset: 2px;
-                }
-                .content-card__rating {
-                    position: absolute;
-                    top: 6px;
-                    left: 6px;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    background: rgba(0, 0, 0, 0.75);
-                    color: #fff;
-                    font-size: 13px;
-                }
-                .content-card__body {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                    padding: 10px;
-                }
-                .content-card__type {
-                    font-size: 12px;
-                    color: #666;
-                }
-                .content-card__title {
-                    margin: 0;
-                    font-size: 16px;
-                    line-height: 1.2;
-                    color: #111;
-                }
-                .content-card__meta {
-                    margin: 0;
-                    font-size: 13px;
-                    color: #555;
-                }
-                .content-card__status {
-                    align-self: flex-start;
-                    padding: 1px 6px;
-                    border: 1px solid #999;
-                    border-radius: 4px;
-                    font-size: 12px;
-                }
-                .content-card__synopsis {
-                    margin: 4px 0 0;
-                    font-size: 12px;
-                    line-height: 1.3;
-                    color: #444;
-                    display: -webkit-box;
-                    -webkit-line-clamp: 4;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
-                }
-                .content-card__bookmark-btn {
-                    align-self: flex-start;
-                    margin-top: 4px;
-                    font-size: 12px;
-                }
-                .content-card__link {
-                    font-size: 12px;
-                }
-            `}</style>
         </>
     );
 }

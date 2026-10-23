@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { API_URL, coverSrc } from "../../api";
+import "../../css/create-content-modal.css";
 
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg"];
 
@@ -331,42 +332,6 @@ function CreateContentModal({ onClose, onSaved, item }){
 
         </div>
 
-        {/* CSS mínimo: solo lo necesario para que el modal flote sobre la página */}
-        <style>{`
-            .modal-overlay {
-                position: fixed;
-                inset: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 1000;
-            }
-            .modal {
-                display: grid;
-                grid-template-columns: 280px 1fr;
-                width: min(900px, 95vw);
-                max-height: 90vh;
-                overflow-y: auto;
-                background: #fff;
-                color: #222;
-                text-align: left;
-            }
-            .modal .coverPreview img {
-                width: 160px;
-                aspect-ratio: 2 / 3;
-                object-fit: cover;
-                display: block;
-            }
-            .modal .steps li.active h3 {
-                text-decoration: underline;
-            }
-            .modal .modal-header {
-                grid-column: 1 / -1;
-                display: flex;
-                justify-content: space-between;
-            }
-        `}</style>
         </>
 
     )

@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+import "../css/sidebar.css";
 
 function Sidebar(){
 
@@ -10,21 +11,22 @@ function Sidebar(){
             <ul>
 
                 <li>
-                    <Link to="/">Inicio</Link>
+                    {/* "end" hace que Inicio solo se marque en "/" exacto.
+                        Sin "end", "/" coincide con todas las rutas y siempre estaría activo. */}
+                    <NavLink to="/" end>Inicio</NavLink>
                 </li>
 
                 <li>
-                    <Link to="/library">Libreria</Link>
+                    <NavLink to="/library">Libreria</NavLink>
                 </li>
 
                 <li>
-                    <Link to="/playlists">Playlists</Link>
+                    <NavLink to="/playlists">Playlists</NavLink>
                 </li>
 
                 <li>
-                    <Link to="/tags">Tags</Link>
+                    <NavLink to="/tags">Tags</NavLink>
                 </li>
-
             </ul>
 
         </div>
