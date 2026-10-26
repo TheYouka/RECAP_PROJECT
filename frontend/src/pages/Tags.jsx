@@ -1,12 +1,93 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
+import TagCard from "../components/TagCard";
 import { API_URL } from "../api";
+import "../css/tags.css";
+
+// Tags de ejemplo con su color (hexadecimal de 6 dígitos, como pide el backend)
+const TEMPLATE_TAGS = [
+    { name: "Drama", color: "#a78bfa" },
+    { name: "Comedia", color: "#facc15" },
+    { name: "Acción", color: "#f87171" },
+    { name: "Terror", color: "#4ade80" },
+    { name: "Ciencia ficción", color: "#60a5fa" },
+    { name: "Romance", color: "#f472b6" },
+    { name: "Musical", color: "#2dd4bf" },
+    { name: "Documental", color: "#9ca3af" },
+];
 
 function Tags(){
 
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState(null);
+
+    const [tags, setTags] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Está fuera del useEffect para que también la pueda usar onHandleSubmit
+    const fetchTags = async () => {
+        try {
+            const response = await fetch(`${API_URL}/tags/`);
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            const data = await response.json();
+            setTags(data);
+        } catch (err) {
+            console.error("Error al obtener tags:", err);
+            setError("No se pudieron cargar los tags.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Carga los tags una sola vez, cuando la página se abre
+    useEffect(() => {
+        fetchTags();
+    }, []);
+
+    // ¿Ya existe un tag con ese nombre? (sin distinguir mayúsculas)
+    const tagExists = (name) =>
+        tags.some((tag) => tag.name.toLowerCase() === name.toLowerCase());
+
+    // Crea un tag de los ejemplos al pulsar su botón
+    const createTemplateTag = async (template) => {
+        // Si ya existe no llamamos a POST
+        if (tagExists(template.name)) return;
+
+        setSaveError(null);
+
+        try {
+            setSaving(true);
+
+            const response = await fetch(`${API_URL}/tags/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: template.name, color: template.color }),
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json().catch(() => null);
+                const detail = typeof errorBody?.detail === "string" ? errorBody.detail : null;
+                throw new Error(detail ?? `Error HTTP: ${response.status}`);
+            }
+
+            // Volvemos a pedir la lista para que el tag nuevo aparezca sin recargar la página
+            await fetchTags();
+        } catch (err) {
+            console.error("Error al crear el tag de ejemplo:", err);
+
+            if (err instanceof TypeError) {
+                setSaveError("No se pudo conectar con el servidor.");
+            } else {
+                setSaveError(err.message);
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // async porque dentro usamos await (esperar la respuesta del servidor)
     const onHandleSubmit = async (event) => {
@@ -46,6 +127,7 @@ function Tags(){
 
             form.reset();                             // limpia el formulario
             // más adelante: mostrar el aviso "Tag creado" y refrescar la lista
+            fetchTags();
 
         }
         catch(err){
@@ -121,20 +203,30 @@ function Tags(){
                 <p>Puedes usar estos tags o crear los tuyos propios.</p>
 
                 <ul className="templates-list">
-                    <li><button type="button">Drama</button></li>
-                    <li><button type="button">Comedia</button></li>
-                    <li><button type="button">Acción</button></li>
-                    <li><button type="button">Terror</button></li>
-                    <li><button type="button">Ciencia ficción</button></li>
-                    <li><button type="button">Romance</button></li>
-                    <li><button type="button">Musical</button></li>
-                    <li><button type="button">Documental</button></li>
+                    {TEMPLATE_TAGS.map((template) => (
+                        <li key={template.name}>
+                            <button
+                                type="button"
+                                onClick={() => createTemplateTag(template)}
+                                disabled={saving || tagExists(template.name)}
+                                title={tagExists(template.name) ? "Este tag ya existe" : undefined}
+                            >
+                                {template.name}
+                            </button>
+                        </li>
+                    ))}
                 </ul>
 
             </div>
 
 
         </div>
+
+        {/* ----------- Seleccionar todos */ }
+        
+
+
+        {/* ----------- Borrar y Actualizar */ }
 
 
         {/* ---------- Parte de abajo: lista de tags ---------- */}
@@ -161,14 +253,21 @@ function Tags(){
                 </div>
 
                 <div className="tags-Container">
-                    
+                    {loading && <p>Cargando tags...</p>}
+                    {error && <p role="alert">{error}</p>}
+                    {!loading && !error && tags.length === 0 && (
+                        <p>Aún no tienes tags. ¡Crea el primero!</p>
+                    )}
+
+                    {tags.map((tag) => (
+                        <TagCard key={tag.id} item={tag} />
+                    ))}
                 </div>
 
 
             </div>
 
 
-                
 
         </div>
 

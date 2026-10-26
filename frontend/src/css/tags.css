@@ -1,0 +1,57 @@
+/* Cuadrícula de tags */
+.tags-Container {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+/* Tarjeta de un tag (TagCard) */
+.tag-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid #eceef2;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    text-align: left;
+}
+
+/* Círculo con el color del tag (el color llega por style desde TagCard) */
+.tag-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #fff;
+}
+
+.tag-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tag-card h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Botón de opciones (···) */
+.tag-menu {
+    padding: 4px 6px;
+    border: none;
+    background: none;
+    color: #6b7280;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
