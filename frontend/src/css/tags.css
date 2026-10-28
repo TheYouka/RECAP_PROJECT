@@ -7,6 +7,7 @@
 
 /* Tarjeta de un tag (TagCard) */
 .tag-card {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -43,6 +44,38 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Casilla de selección, arriba a la derecha */
+.tag-select {
+    -webkit-appearance: none;
+    appearance: none;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.tag-select:checked {
+    border-color: #4f46e5;
+    background: #4f46e5;
+}
+
+.tag-select:focus-visible {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
+}
+
+/* La tarjeta se ilumina cuando su casilla está marcada */
+.tag-card:has(.tag-select:checked) {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
 /* Botón de opciones (···) */

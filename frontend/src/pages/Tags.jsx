@@ -26,6 +26,10 @@ function Tags(){
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [selectedTags, setSelectedTags] = useState([]); // ids de los Tags seleccionados
+
+    
+
     // Está fuera del useEffect para que también la pueda usar onHandleSubmit
     const fetchTags = async () => {
         try {
@@ -86,6 +90,65 @@ function Tags(){
             }
         } finally {
             setSaving(false);
+        }
+    };
+
+    // Agrega o quita un tag de la lista de seleccionados
+    const toggleSelectedTag = (id) => {
+        setSelectedTags((prev) =>
+            prev.includes(id)
+                ? prev.filter((tagId) => tagId !== id)   // si ya estaba, lo quita
+                : [...prev, id]                          // si no estaba, lo agrega
+        );
+    };
+
+    // Comprueba si todos los tags que hay en pantalla ya están seleccionados
+    const allTagsSelected =
+        tags.length > 0 && tags.every((tag) => selectedTags.includes(tag.id));
+
+    // Selecciona todos los tags o, si ya están todos, los deselecciona
+    const toggleSelectAllTags = () => {
+        setSelectedTags(allTagsSelected ? [] : tags.map((tag) => tag.id));
+    };
+
+    // Elimina los tags seleccionados
+    const removeSelectedTags = async () => {
+        const tagsToDelete = [...selectedTags];
+
+        try {
+            const results = await Promise.allSettled(
+                tagsToDelete.map(async (id) => {
+                    const response = await fetch(`${API_URL}/tags/${id}`, {
+                        method: "DELETE",
+                    });
+
+                    // 404 significa que el tag ya no existe, así que también lo quitamos de la selección
+                    if (response.ok || response.status === 404) {
+                        return id;
+                    }
+
+                    throw new Error(`Error HTTP: ${response.status}`);
+                })
+            );
+
+            const deletedIds = results
+                .filter((result) => result.status === "fulfilled")
+                .map((result) => result.value);
+            const failedResults = results.filter((result) => result.status === "rejected");
+
+            // Solo quitamos de la selección los tags que se borraron correctamente
+            setSelectedTags((prev) => prev.filter((id) => !deletedIds.includes(id)));
+
+            if (failedResults.length > 0) {
+                console.error("Error al borrar algunos tags:", failedResults);
+                alert(`No se pudieron borrar ${failedResults.length} tags.`);
+            }
+        } catch (err) {
+            console.error("Error al borrar los tags:", err);
+            alert("No se pudieron borrar los tags.");
+        } finally {
+            // Actualiza la lista aunque haya fallado algún borrado
+            await fetchTags();
         }
     };
 
@@ -223,10 +286,38 @@ function Tags(){
         </div>
 
         {/* ----------- Seleccionar todos */ }
+        <div className="selectContainer">
+            <button
+                type="button"
+                onClick={toggleSelectAllTags}
+                disabled={tags.length === 0}
+            >
+                {allTagsSelected ? "Deseleccionar todos" : "Seleccionar todos"}
+            </button>
+        </div>
+
+
+        {/* ----------- Borrar y Actualizar deben estar en la parte inferior derecha flotando*/ }
+        <div className="tools-Container">
         
+        {selectedTags.length > 0 &&
+        <button type="button" className="delete" onClick={removeSelectedTags}>
+            Borrar
+        </button>
+        }
+
+        {
+            selectedTags.length == 1 && 
+
+            <button className="update">
+                Actualizar
+            </button>
+
+        }
 
 
-        {/* ----------- Borrar y Actualizar */ }
+        </div>
+
 
 
         {/* ---------- Parte de abajo: lista de tags ---------- */}
@@ -260,7 +351,12 @@ function Tags(){
                     )}
 
                     {tags.map((tag) => (
-                        <TagCard key={tag.id} item={tag} />
+                        <TagCard
+                            key={tag.id}
+                            item={tag}
+                            selected={selectedTags.includes(tag.id)}
+                            onSelectChange={toggleSelectedTag}
+                        />
                     ))}
                 </div>
 

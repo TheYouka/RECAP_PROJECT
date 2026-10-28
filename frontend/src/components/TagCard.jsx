@@ -1,10 +1,20 @@
 
-function TagCard({item}){
+function TagCard({item, selected = false, onSelectChange}){
     const {name, color} = item;
+
 
     return(
 
         <div className="tag-card">
+            {/* Casilla para seleccionar el tag (esquina superior derecha) */}
+            <input
+                type="checkbox"
+                className="tag-select"
+                aria-label={`Seleccionar ${name}`}
+                checked={selected}
+                onChange={() => onSelectChange?.(item.id)}
+            />
+
             {/* Círculo con el color del tag; si no tiene color (null) se usa un gris */}
             <span
                 className="tag-dot"
@@ -22,10 +32,7 @@ function TagCard({item}){
                 <h3>{name}</h3>
             </div>
 
-            {/* Menú de opciones (todavía sin función) */}
-            <button type="button" className="tag-menu" aria-label={`Opciones de ${name}`}>
-                ···
-            </button>
+            
 
         </div>
 
