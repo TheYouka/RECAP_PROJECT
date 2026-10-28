@@ -1,0 +1,24 @@
+/* CSS mínimo: solo lo necesario para que el modal flote sobre la página */
+.tag-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.tag-modal {
+    width: min(480px, 95vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    color: #222;
+    text-align: left;
+}
+
+/* Círculo de cada color predefinido */
+.tag-modal-swatch {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}

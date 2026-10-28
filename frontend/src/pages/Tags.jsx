@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import TagCard from "../components/TagCard";
+import UpdateTagModal from "../components/Modales/UpdateTagModal";
 import { API_URL } from "../api";
 import "../css/tags.css";
 
@@ -27,6 +28,10 @@ function Tags(){
     const [error, setError] = useState(null);
 
     const [selectedTags, setSelectedTags] = useState([]); // ids de los Tags seleccionados
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+    // Tag a editar: el único seleccionado (el botón "Actualizar" solo aparece con 1)
+    const tagToUpdate = tags.find((tag) => tag.id === selectedTags[0]);
 
     
 
@@ -309,7 +314,7 @@ function Tags(){
         {
             selectedTags.length == 1 && 
 
-            <button className="update">
+            <button type="button" className="update" onClick={() => setShowUpdateModal(true)}>
                 Actualizar
             </button>
 
@@ -317,6 +322,16 @@ function Tags(){
 
 
         </div>
+
+        {/* Modal para editar el único tag seleccionado */}
+        {showUpdateModal && tagToUpdate && (
+            <UpdateTagModal
+                key={tagToUpdate.id}
+                item={tagToUpdate}
+                onClose={() => setShowUpdateModal(false)}
+                onSaved={fetchTags}
+            />
+        )}
 
 
 
