@@ -1,0 +1,37 @@
+/* CSS mínimo: solo lo necesario para que el modal flote sobre la página */
+.bookmark-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.bookmark-modal {
+    width: min(480px, 95vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    color: #222;
+    text-align: left;
+}
+
+/* Portada pequeña de la película */
+.bookmark-modal-content img,
+.bookmark-modal-no-cover {
+    width: 80px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+}
+
+/* Campos a todo el ancho del modal */
+.bookmark-modal input[type="text"],
+.bookmark-modal textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Cada opción de "Fuente del resumen" en su propia línea */
+.bookmark-modal-option {
+    display: block;
+}

@@ -4,6 +4,7 @@ import Sidebar from "../components/sidebar";
 import ContentCard from "../components/ContentCard";
 import { API_URL } from "../api";
 import CreateContentModal from "../components/Modales/CreateContentModal";
+import BookmarkModal from "../components/Modales/BookmarkModal";
 import "../css/library.css";
 
 // Valores de content.type según el modelo de datos (ContentType: movie | music).
@@ -343,7 +344,14 @@ function Library() {
                 
             }
 
-            
+            {/*Agregar o editar el separador de una película*/}
+            {bookmarkItem && (
+                <BookmarkModal
+                    key={bookmarkItem.id}
+                    item={bookmarkItem}
+                    onClose={closeBookmarkModal}
+                />
+            )}
 
         </>
     );
