@@ -35,3 +35,19 @@
 .bookmark-modal-option {
     display: block;
 }
+
+/* Lista desplegable de la caja de búsqueda */
+.bookmark-picker-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid #ddd;
+}
+
+.bookmark-picker-list button {
+    display: block;
+    width: 100%;
+    text-align: left;
+}

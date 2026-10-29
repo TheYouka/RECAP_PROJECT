@@ -83,6 +83,7 @@ function Library() {
     const [error, setError] = useState(null);
     const [bookmarkItem, setBookmarkItem] = useState(null); // item en edición, null = modal cerrado
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showBookmarkPicker, setShowBookmarkPicker] = useState(false); // modal genérico de "Agregar Separador"
     const [updateModal, setUpdateCreateModal ] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]); // ids de los elementos seleccionados
 
@@ -276,7 +277,7 @@ function Library() {
                             </button>
 
                             
-                            <button>Agregar Separador</button>
+                            <button type="button" onClick={() => setShowBookmarkPicker(true)}>Agregar Separador</button>
                         </li>
                     </ul>
                 </div>
@@ -350,6 +351,20 @@ function Library() {
                     key={bookmarkItem.id}
                     item={bookmarkItem}
                     onClose={closeBookmarkModal}
+                    onSaved={handleBookmarkSaved}
+                />
+            )}
+
+            {/*Agregar separador desde el botón genérico: primero se elige la película*/}
+            {showBookmarkPicker && (
+                <BookmarkModal
+                    // Solo películas: el backend rechaza separadores en música (422)
+                    options={content.filter((item) => item.type === "movie")}
+                    onClose={() => setShowBookmarkPicker(false)}
+                    onSaved={() => {
+                        setShowBookmarkPicker(false);
+                        fetchContent();
+                    }}
                 />
             )}
 
@@ -358,3 +373,4 @@ function Library() {
 }
 
 export default Library;
+
