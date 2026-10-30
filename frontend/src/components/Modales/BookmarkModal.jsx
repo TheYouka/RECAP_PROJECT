@@ -14,13 +14,16 @@ const formatDuration = (minutes) => {
 // Sin separador: POST /content/{id}/bookmark. Con separador: PATCH al mismo endpoint.
 // "Generar resumen con IA" todavía no funciona.
 function BookmarkForm({ item, onClose, onSaved }) {
-    const { title, cover_url, movie, bookmark } = item;
+    const { title, cover_url, movie, bookmark, id} = item;
     const isEdit = Boolean(bookmark);
+
 
     // Fuente del resumen: "manual" (lo escribe el usuario) o "ia" (lo genera la IA)
     const [source, setSource] = useState(bookmark?.recap_source ?? "manual");
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState(null);
+
+    const [deleting, setDeleting]  = useState(false);
 
     const handleSubmit = async (event) => {
         event.preventDefault();               // evita que la página se recargue
@@ -76,6 +79,44 @@ function BookmarkForm({ item, onClose, onSaved }) {
             setSaving(false);
         }
     };
+
+
+    // FUNCION PARA ELIMINAR UN SEPARADOR
+    const deleteBookmark = async (event) => {
+        event.preventDefault();               // evita que la página se recargue
+        setSaveError(null);
+
+        try {
+            setDeleting(true);
+
+            // DELETE /content/{id}/bookmark elimina el separador de esta película
+            const response = await fetch(`${API_URL}/content/${id}/bookmark`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                // El backend explica el motivo en "detail" (ej. "no tiene separador")
+                const errorBody = await response.json().catch(() => null);
+                const detail = typeof errorBody?.detail === "string" ? errorBody.detail : null;
+                throw new Error(detail ?? `Error HTTP: ${response.status}`);
+            }
+
+            // El padre cierra el modal y vuelve a pedir la lista de contenido
+            onSaved?.();
+        } catch (err) {
+            console.error("Error al borrar el separador:", err);
+
+            if (err instanceof TypeError) {
+                // fetch falló antes de recibir respuesta: backend apagado o sin red
+                setSaveError("No se pudo conectar con el servidor.");
+            } else {
+                setSaveError(err.message);
+            }
+        } finally {
+            setDeleting(false);
+        }
+    };
+
 
     // Datos de la película para la cabecera: "Director · 2024 · 2h 46m"
     const meta = [movie?.director, movie?.release_year, formatDuration(movie?.duration_minutes)]
@@ -187,6 +228,12 @@ function BookmarkForm({ item, onClose, onSaved }) {
                     <button type="submit" disabled={saving}>
                         {saving ? "Guardando..." : "Guardar separador"}
                     </button>
+
+                    <button type="button" onClick={deleteBookmark}>
+                        {deleting ? "Borrando" : "Borrar"}
+                    </button>
+
+
                 </div>
 
             </form>
