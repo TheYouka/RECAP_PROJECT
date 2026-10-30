@@ -12,3 +12,9 @@ export function coverSrc(cover_url) {
     if (cover_url.startsWith("/uploads")) return `${API_URL}${cover_url}`;
     return cover_url;
 }
+
+// Portada de una playlist: siempre está en uploads/playlist-covers/{id}.jpg
+// Si el archivo no existe, la imagen falla al cargar y el fondo queda en blanco.
+export function playlistCoverSrc(id) {
+    return `${API_URL}/uploads/playlist-covers/${id}.jpg`;
+}

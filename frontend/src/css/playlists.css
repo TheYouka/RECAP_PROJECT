@@ -1,0 +1,40 @@
+/* Playlists en cuadrícula fija de 4 columnas */
+.defaultPlaylist-Container ul {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Tarjeta de una playlist (parecida a tag-card) */
+.defaultPlaylist-Container li {
+    position: relative;
+    /*height: width;*/
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #eceef2;
+    border-radius: 10px;
+}
+
+/* Fondo: imagen sin src por ahora; cubre toda la tarjeta */
+.playlist-cover {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* El enlace va encima de la imagen y ocupa toda la tarjeta */
+.defaultPlaylist-Container li a {
+    position: relative;
+    display: block;
+    height: 100%;
+    padding: 14px 16px;
+    font-weight: 600;
+    color: #111827;
+    text-decoration: none;
+}
