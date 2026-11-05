@@ -5,6 +5,7 @@ import ContentCard from "../components/ContentCard";
 import { API_URL } from "../api";
 import CreateContentModal from "../components/Modales/CreateContentModal";
 import BookmarkModal from "../components/Modales/BookmarkModal";
+import AddToPlaylistModal from "../components/Modales/AddToPlaylistModal";
 import "../css/library.css";
 
 // Valores de content.type según el modelo de datos (ContentType: movie | music).
@@ -86,6 +87,7 @@ function Library() {
     const [showBookmarkPicker, setShowBookmarkPicker] = useState(false); // modal genérico de "Agregar Separador"
     const [updateModal, setUpdateCreateModal ] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]); // ids de los elementos seleccionados
+    const [showAddToPlaylist, setShowAddToPlaylist] = useState(false); // modal de "Agregar a playlist"
 
     useEffect(() => {
         fetchContent();
@@ -291,6 +293,12 @@ function Library() {
                         </button>
                 }
 
+                {selectedIds.length != 0 &&
+                    <button type="button" onClick={() => setShowAddToPlaylist(true)}>
+                        Agregar a playlist
+                    </button>
+                }
+
                 {selectedIds.length === 1 && 
                     <button type="button" onClick={() => setUpdateCreateModal(true)}>
                         Actualizar
@@ -364,6 +372,20 @@ function Library() {
                     onSaved={() => {
                         setShowBookmarkPicker(false);
                         fetchContent();
+                    }}
+                />
+            )}
+
+            {/*Agregar los elementos seleccionados a una playlist*/}
+            {showAddToPlaylist && (
+                <AddToPlaylistModal
+                    contentIds={selectedIds}
+                    onClose={() => setShowAddToPlaylist(false)}
+                    onDone={() => {
+                        setShowAddToPlaylist(false);
+                        // La acción terminó, así que limpiamos la selección.
+                        // No hace falta fetchContent: el contenido no cambia.
+                        setSelectedIds([]);
                     }}
                 />
             )}

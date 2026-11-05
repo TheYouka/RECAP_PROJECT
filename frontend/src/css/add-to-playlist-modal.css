@@ -1,0 +1,21 @@
+/* CSS mínimo: solo lo necesario para que el modal flote sobre la página */
+.add-playlist-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.add-playlist-modal {
+    width: min(480px, 95vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    color: #222;
+    text-align: left;
+}
+
+/* Cada playlist en su propia línea */
+.add-playlist-modal-option {
+    display: block;
+}

@@ -5,7 +5,7 @@ import Sidebar from "../components/sidebar";
 import ContentCard from "../components/contentCard";
 import { API_URL } from "../api";
 
-const SEVEN_DAYS_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
+const SEVEN_DAYS_IN_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 
 function parseCreatedAt(value) {
     const timestamp = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`;
@@ -18,11 +18,36 @@ function PlaylistView() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    let id_number;
+
+    switch (slug) {
+        case "watchlater":
+            id_number = 1;
+            break;
+        
+        case "vistos":
+            id_number = 2;
+            break;
+
+        case "viendo":
+        id_number = 3;
+        break;
+    
+        default:
+            id_number = -1;
+            break;
+    }
+
+    console.log(id_number);
+
     useEffect(() => {
+
+        
         if (slug !== "recien-añadidas") {
             return;
         }
 
+        {/*Funcion para obtener el contenido reciente*/ }
         async function fetchRecentContent() {
             setLoading(true);
             setError(null);
@@ -50,7 +75,42 @@ function PlaylistView() {
         }
 
         fetchRecentContent();
+
+        {/*Función para todas las demas playlists con contenido ya guardado en la base de datos*/}
+        async function fetchContent(){
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await fetch(`${API_URL}/playlists/${id_number}`);
+                if (!response.ok) {
+                    throw new Error("No se pudo cargar el contenido");
+                }
+
+                const content = await response.json();
+                
+                setRecentContent(
+                    content.filter((item) => {
+                        const createdAt = parseCreatedAt(item.created_at);
+                        return createdAt > cutoff && createdAt <= now;
+                    }),
+                );
+            } catch (fetchError) {
+                setError(fetchError.message);
+            } finally {
+                setLoading(false);
+            }
+
+
+        }
+
+
     }, [slug]);
+
+
+    
+
+    
 
     return (
         <>
